@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTok Downloader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Tik<span>Grab</span></div>
+    <div class="subtitle">TikTok Video Downloader &amp; Bulk Exporter</div>
+  </div>
+  <div class="theme-toggle" id="theme-toggle" title="Switch theme">
+    <div class="theme-toggle-option active" data-theme-val="dark">🌙 Sombre</div>
+    <div class="theme-toggle-option" data-theme-val="light">☀️ Clair</div>
+  </div>
+</header>
+
+<main>
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="single">⬇ Single Download</button>
+    <button class="tab-btn" data-tab="bulk">📦 Bulk Download</button>
+    <button class="tab-btn" data-tab="settings">⚙ Settings</button>
+  </nav>
+
+  <!-- ── Tab: Single Download ── -->
+  <div id="tab-single" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">Single Video Download</div>
+      <div class="field">
+        <label>TikTok Video URL</label>
+        <div class="input-group">
+          <input id="single-url" type="url" placeholder="https://www.tiktok.com/@user/video/123456..." />
+          <button class="btn btn-secondary" id="btn-fetch-info">Fetch Info</button>
+        </div>
+      </div>
+
+      <div id="single-alert" class="alert"></div>
+
+      <div id="single-preview">
+        <img id="preview-thumb" src="" alt="thumbnail" />
+        <div class="preview-meta">
+          <h3 id="preview-title"></h3>
+          <div class="stats">
+            <span class="stat-item" id="stat-user">👤 </span>
+            <span class="stat-item" id="stat-duration">⏱ </span>
+            <span class="stat-item" id="stat-views">👁 </span>
+            <span class="stat-item" id="stat-likes">❤️ </span>
+            <span class="stat-item" id="stat-date">📅 </span>
+          </div>
+          <button class="btn btn-primary" id="btn-download-single" disabled>
+            ⬇ Download HD (No Watermark)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Bulk Download ── -->
+  <div id="tab-bulk" class="tab-panel">
+    <div class="card">
+      <div class="card-title">Fetch Videos by Username</div>
+
+      <div class="field">
+        <label>TikTok Username</label>
+        <div class="input-group">
+          <input id="bulk-username" type="text" placeholder="@username" />
+        </div>
+      </div>
+
+      <details style="margin-bottom:14px;">
+        <summary style="cursor:pointer;color:var(--text-muted);font-size:13px;margin-bottom:8px;">▶ Filters (optional)</summary>
+        <div style="margin-top:12px;">
+          <div class="grid-2">
+            <div class="field">
+              <label>Date From (YYYY-MM-DD)</label>
+              <input id="filter-date-from" type="date" />
+            </div>
+            <div class="field">
+              <label>Date To (YYYY-MM-DD)</label>
+              <input id="filter-date-to" type="date" />
+            </div>
+            <div class="field">
+              <label>Min Duration (seconds)</label>
+              <input id="filter-min-dur" type="number" min="0" placeholder="e.g. 5" />
+            </div>
+            <div class="field">
+              <label>Max Duration (seconds)</label>
+              <input id="filter-max-dur" type="number" min="0" placeholder="e.g. 120" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Keywords (comma-separated — must all appear in title/description)</label>
+            <input id="filter-keywords" type="text" placeholder="e.g. cooking, recipe" />
+          </div>
+          <div class="field">
+            <label>Max Videos to Fetch <span style="color:var(--accent2);font-weight:normal;">(leave blank = fetch ALL)</span></label>
+            <input id="bulk-max" type="number" min="1" placeholder="All" style="width:120px;" />
+          </div>
+        </div>
+      </details>
+
+      <button class="btn btn-primary" id="btn-bulk-fetch">🔍 Fetch Videos</button>
+
+      <div id="bulk-alert" class="alert" style="margin-top:12px;"></div>
+
+      <div class="progress-wrap" id="bulk-progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="bulk-progress-bar"></div></div>
+        <div class="progress-text" id="bulk-progress-text">Fetching…</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card" id="bulk-results-card" style="display:none;">
+      <div class="results-header">
+        <div>
+          <span style="font-weight:600;">Results</span>
+          <span class="badge" id="result-count">0</span>
+        </div>
+        <div class="results-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-select-all">Select All</button>
+          <button class="btn btn-secondary btn-sm" id="btn-select-none">None</button>
+          <button class="btn btn-primary btn-sm" id="btn-download-selected">⬇ Download Selected</button>
+          <button class="btn btn-secondary btn-sm" id="btn-zip-selected">🗜 ZIP Selected</button>
+          <button class="btn btn-secondary btn-sm" id="btn-export-csv-bulk">📊 Export CSV</button>
+          <button class="btn btn-secondary btn-sm" id="btn-export-json-bulk">{ } Export JSON</button>
+        </div>
+      </div>
+
+      <div id="download-progress-wrap" class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="dl-progress-bar"></div></div>
+        <div class="progress-text" id="dl-progress-text">Downloading…</div>
+      </div>
+
+      <div class="results-table-wrap">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="chk-all-header" /></th>
+              <th>Thumb</th>
+              <th>Title</th>
+              <th>Date</th>
+              <th>Duration</th>
+              <th>Views</th>
+              <th>Likes</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Settings ── -->
+  <div id="tab-settings" class="tab-panel">
+    <div class="card">
+      <div class="card-title">Settings</div>
+
+      <div class="setting-row">
+        <label>Cookies File Path (optional)</label>
+        <input id="settings-cookies" type="text" placeholder="C:\path\to\cookies.txt" />
+        <p>
+          Export cookies from your TikTok browser session in Netscape format using a browser extension like "Get cookies.txt".
+          Provide the path here to help with geo-restricted or private content.
+        </p>
+      </div>
+
+      <div class="setting-row">
+        <label>Downloads folder</label>
+        <p>Videos are temporarily saved to the <code>downloads/</code> folder next to <code>main.py</code> and cleaned up automatically after download.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Troubleshooting</div>
+      <div style="color:var(--text-muted);font-size:13px;line-height:1.8;">
+        <p><strong style="color:var(--text);">Downloads not working?</strong> TikTok changes its API frequently. Update yt-dlp:</p>
+        <code style="display:block;background:var(--surface2);padding:8px 12px;border-radius:6px;margin:8px 0;">pip install -U yt-dlp</code>
+        <p><strong style="color:var(--text);">Rate limited / 403 errors?</strong> Wait a few minutes or add a cookies.txt file above.</p>
+        <p><strong style="color:var(--text);">Hashtag scraping failing?</strong> TikTok hashtag scraping is currently unreliable in yt-dlp. Use username-based bulk fetch instead.</p>
+        <p><strong style="color:var(--text);">Videos for personal offline use only.</strong> Always respect creators' rights and TikTok's Terms of Service.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
