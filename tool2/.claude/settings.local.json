@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python app.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000)",
+      "Bash(python -m instaloader --sessionfile=ig.session --login)",
+      "Bash(python -c ' *)",
+      "Bash(pip show *)",
+      "Bash(pkill -f \"python app.py\")",
+      "Bash(python -m base64 -c \"import base64; data=open\\('ig.session','rb'\\).read\\(\\); print\\(base64.b64encode\\(data\\).decode\\(\\)\\)\")",
+      "Bash(python -c \"import base64; data=open\\('ig.session','rb'\\).read\\(\\); print\\(base64.b64encode\\(data\\).decode\\(\\)\\)\")",
+      "Bash(winget install *)",
+      "Bash(ngrok config *)",
+      "PowerShell(ngrok config add-authtoken 3Cwjvgsqe3FddoIeD0BjCwNWq6E_qqhGMWACYA1H1BP2ZiiU)",
+      "PowerShell(Get-Command ngrok -ErrorAction SilentlyContinue; where.exe ngrok 2>$null; ls \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\\\\Packages\" | Select-String -Pattern \"ngrok\")",
+      "PowerShell($ngrokPath = Get-ChildItem \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\\\\Packages\\\\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\" -Recurse -Filter \"ngrok.exe\" | Select-Object -First 1 -ExpandProperty FullName; Write-Host $ngrokPath; & $ngrokPath config add-authtoken 3Cwjvgsqe3FddoIeD0BjCwNWq6E_qqhGMWACYA1H1BP2ZiiU)",
+      "PowerShell(Invoke-RestMethod http://localhost:4040/api/tunnels)",
+      "PowerShell($ngrok = \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\ngrok.exe\"; & $ngrok update 2>&1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://127.0.0.1:5000/static/style.css\")"
+    ]
+  }
+}

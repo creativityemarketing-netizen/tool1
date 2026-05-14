@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Instagram Date Finder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 16px 60px;
+    }
+
+    .logo {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 32px;
+    }
+    .logo h1 { color: #fff; font-size: 1.5rem; font-weight: 700; }
+    .logo p  { color: rgba(255,255,255,.5); font-size: .85rem; margin-top: 4px; }
+
+    .card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      padding: 36px 32px; width: 100%; max-width: 520px;
+    }
+
+    .section-label {
+      display: block; font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #999; margin-bottom: 12px;
+    }
+
+    /* Login form */
+    .login-form input[type="password"] {
+      width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0;
+      border-radius: 12px; font-size: .95rem; outline: none;
+      transition: border-color .2s; margin-bottom: 12px;
+    }
+    .login-form input[type="password"]:focus { border-color: #0f3460; }
+
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-size: .95rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-primary { background: #0f3460; color: #fff; }
+    .btn-primary:hover { opacity: .85; }
+    .btn-danger  { background: #fff0f0; color: #c53030; border: 1.5px solid #fc8181; margin-top: 10px; }
+    .btn-danger:hover { background: #ffe4e4; }
+
+    .error-msg {
+      background: #fff5f5; border: 1.5px solid #fc8181; border-radius: 10px;
+      padding: 10px 14px; color: #c53030; font-size: .9rem; margin-bottom: 16px;
+    }
+
+    /* DB status */
+    .db-status {
+      background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 10px;
+      padding: 14px 16px; color: #2b6cb0; font-size: .88rem; margin-bottom: 24px;
+    }
+    .db-status strong { display: block; font-size: .95rem; margin-bottom: 4px; }
+    .db-stat-row { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; }
+    .db-stat { font-size: .8rem; color: #4a5568; }
+    .db-stat span { font-weight: 700; color: #2b6cb0; }
+
+    .divider { height: 1px; background: #f0f0f0; margin: 24px 0; }
+
+    /* Upload */
+    #file-input { display: none; }
+    .upload-label {
+      display: block; border: 2px dashed #e0e0e0; border-radius: 12px;
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; margin-bottom: 12px;
+    }
+    .upload-label:hover,
+    .upload-label.drag-over { border-color: #0f3460; background: #f0f4ff; }
+    .upload-icon { font-size: 2rem; margin-bottom: 6px; }
+    .upload-label p { color: #999; font-size: .88rem; }
+    .upload-label strong { color: #555; }
+
+    #upload-status {
+      display: none; margin-top: 10px; padding: 12px 16px;
+      border-radius: 10px; font-size: .9rem; text-align: center;
+    }
+
+    .back-link {
+      display: inline-block; margin-top: 20px; color: rgba(255,255,255,.6);
+      font-size: .85rem; text-decoration: none;
+    }
+    .back-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="logo">
+    <h1>🔒 Admin Panel</h1>
+    <p>Instagram Date Finder</p>
+  </div>
+
+  <div class="card">
+
+    {% if not logged_in %}
+
+      <!-- LOGIN FORM -->
+      <span class="section-label">Admin access</span>
+
+      {% if error %}
+        <div class="error-msg">❌ {{ error }}</div>
+      {% endif %}
+
+      <form class="login-form" method="POST" action="/admin/login">
+        <input type="password" name="password" placeholder="Enter admin password" autofocus />
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+
+    {% else %}
+
+      <!-- ADMIN DASHBOARD -->
+      {% if db_info %}
+        <div class="db-status">
+          <strong>📊 Active database</strong>
+          <div class="db-stat-row">
+            <div class="db-stat">Posts: <span>{{ db_info.rows }}</span></div>
+            <div class="db-stat">Indexed: <span>{{ db_info.indexed }}</span></div>
+            <div class="db-stat">Loaded: <span>{{ db_info.loaded_at }}</span></div>
+          </div>
+        </div>
+      {% else %}
+        <div class="error-msg">⚠️ No database loaded yet. Upload a file below.</div>
+      {% endif %}
+
+      <span class="section-label">Upload new database</span>
+      <p style="font-size:.85rem;color:#777;margin-bottom:16px">
+        The new file will replace the current database <strong>instantly for all users</strong>.
+      </p>
+
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
+      <label for="file-input" class="upload-label" id="upload-label">
+        <div class="upload-icon">📂</div>
+        <p><strong>Click to upload</strong> or drag &amp; drop</p>
+        <p>.xlsx · .xls · .csv — max 50 MB</p>
+      </label>
+
+      <div id="upload-status"></div>
+
+      <div class="divider"></div>
+
+      <a href="/admin/logout" class="btn btn-danger" style="display:block;text-align:center;text-decoration:none">Logout</a>
+
+    {% endif %}
+
+  </div>
+
+  <a href="/" class="back-link">← Back to search</a>
+
+  {% if logged_in %}
+  <script>
+    const input = document.getElementById("file-input");
+    const label = document.getElementById("upload-label");
+
+    input.addEventListener("change", () => uploadFile(input.files[0]));
+
+    label.addEventListener("dragover",  e => { e.preventDefault(); label.classList.add("drag-over"); });
+    label.addEventListener("dragleave", ()  => label.classList.remove("drag-over"));
+    label.addEventListener("drop", e => {
+      e.preventDefault();
+      label.classList.remove("drag-over");
+      if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+    });
+
+    function setStatus(icon, text, color) {
+      const el = document.getElementById("upload-status");
+      el.style.display  = "block";
+      el.style.background = color === "green" ? "#f0fff4" : color === "red" ? "#fff5f5" : "#fffdf0";
+      el.style.border     = `1px solid ${color === "green" ? "#68d391" : color === "red" ? "#fc8181" : "#f6c90e"}`;
+      el.style.color      = color === "green" ? "#276749" : color === "red" ? "#c53030" : "#7a5f00";
+      el.textContent = `${icon} ${text}`;
+    }
+
+    async function uploadFile(file) {
+      if (!file) return;
+      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      if (![".xlsx", ".xls", ".csv"].includes(ext)) {
+        setStatus("❌", `Unsupported format: ${ext}`, "red");
+        return;
+      }
+
+      setStatus("⏳", `Uploading ${file.name}…`, "yellow");
+
+      const form = new FormData();
+      form.append("file", file);
+
+      try {
+        const r = await fetch("/admin/upload", { method: "POST", body: form });
+        const d = await r.json();
+        if (d.ok) {
+          setStatus("✅", `Done — ${d.info.rows} posts loaded. All users now use this database.`, "green");
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          setStatus("❌", d.error || "Upload failed.", "red");
+        }
+      } catch (e) {
+        setStatus("❌", "Network error: " + e.message, "red");
+      }
+
+      input.value = "";
+    }
+  </script>
+  {% endif %}
+
+</body>
+</html>

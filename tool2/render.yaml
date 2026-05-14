@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: instasearch
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 300 --workers 2 --threads 4
+    envVars:
+      - key: IG_SESSION_B64
+        sync: false

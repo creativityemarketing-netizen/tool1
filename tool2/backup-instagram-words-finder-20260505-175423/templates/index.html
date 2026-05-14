@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Words Finder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="logo">
+        <span class="logo-icon">IG</span>
+        <span class="logo-text"><strong>Instagram</strong> Words Finder</span>
+      </div>
+      <p class="hero-sub">Find words inside captions from an Instagram profile.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="search-panel">
+      <div class="search-group">
+        <label class="step-label" for="username"><span class="step-num">1</span> Instagram profile</label>
+        <div class="search-row">
+          <span class="search-icon">@</span>
+          <input id="username" type="text" placeholder="username or https://www.instagram.com/username/" autocomplete="off">
+          <button class="btn-search" id="load-profile">Load Profile</button>
+        </div>
+      </div>
+
+      <div class="search-group dimmed" id="words-step">
+        <label class="step-label" for="words"><span class="step-num">2</span> Words to find</label>
+        <div class="search-row">
+          <span class="search-icon">Aa</span>
+          <input id="words" type="text" placeholder="example: casablanca, restaurant, promo" disabled>
+          <select class="select-posts" id="mode" aria-label="Match mode">
+            <option value="any" selected>Any word</option>
+            <option value="all">All words</option>
+          </select>
+          <button class="btn-search" id="search" disabled>Find Posts</button>
+        </div>
+      </div>
+
+      <details class="login-section">
+        <summary>Optional Instaloader session / browser cookies</summary>
+        <div class="login-grid">
+          <div>
+            <label for="login_username">Instagram login username</label>
+            <input id="login_username" type="text" placeholder="your Instagram username" autocomplete="username">
+          </div>
+          <div>
+            <label for="login_password">Instagram password</label>
+            <input id="login_password" type="password" placeholder="password" autocomplete="current-password">
+          </div>
+          <div class="full-col login-actions">
+            <button class="btn-filter" id="login-save" type="button">Login and Save Session</button>
+            <span id="login-status"></span>
+          </div>
+          <div class="full-col two-factor" id="two-factor" style="display:none">
+            <label for="two_factor_code">Two-factor code</label>
+            <div class="login-actions">
+              <input id="two_factor_code" type="text" placeholder="123456" inputmode="numeric" autocomplete="one-time-code">
+              <button class="btn-filter" id="login-2fa" type="button">Verify Code</button>
+            </div>
+          </div>
+          <div>
+            <label for="browser_cookies">Read cookies from browser</label>
+            <select id="browser_cookies">
+              <option value="" selected>None</option>
+              <option value="chrome">Chrome</option>
+              <option value="edge">Edge</option>
+              <option value="firefox">Firefox</option>
+              <option value="brave">Brave</option>
+            </select>
+          </div>
+          <div>
+            <label for="cookie_file">cookies.txt file path</label>
+            <input id="cookie_file" type="text" placeholder="C:\Users\HP\Downloads\instagram-cookies.txt">
+          </div>
+          <div>
+            <label for="session_username">Session username</label>
+            <input id="session_username" type="text" placeholder="your Instagram username">
+          </div>
+          <div>
+            <label for="session_file">Session file path</label>
+            <input id="session_file" type="text" placeholder="C:\Users\HP\Downloads\recherche par mots in instagram\ig.session">
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <div class="alert-error" id="error" style="display:none">
+      <span class="alert-icon">!</span>
+      <span id="error-text"></span>
+    </div>
+
+    <section class="profile-card" id="profile-card" style="display:none">
+      <div class="profile-avatar-wrap">
+        <img class="profile-avatar" id="profile-avatar" src="" alt="">
+        <span class="verified-badge" id="verified" style="display:none">V</span>
+      </div>
+      <div>
+        <div class="profile-name-row">
+          <span class="profile-handle" id="profile-handle"></span>
+          <span class="tag tag-private" id="private-tag" style="display:none">Private</span>
+        </div>
+        <p class="profile-fullname" id="profile-fullname"></p>
+        <p class="profile-bio" id="profile-bio"></p>
+        <a class="profile-link" id="profile-link" href="" target="_blank" rel="noreferrer"></a>
+      </div>
+      <div class="profile-stats">
+        <div class="stat-box"><span class="stat-num" id="followers">0</span><span class="stat-lbl">Followers</span></div>
+        <div class="stat-box"><span class="stat-num" id="posts">0</span><span class="stat-lbl">Posts</span></div>
+        <div class="stat-box"><span class="stat-num" id="following">0</span><span class="stat-lbl">Following</span></div>
+      </div>
+    </section>
+
+    <div class="results-header">
+      <div>
+        <h2 class="results-title">Matching Posts</h2>
+        <p class="results-meta" id="results-meta">Load a profile first, then search words in captions.</p>
+      </div>
+      <div id="exports" style="display:none">
+        <a id="csv-link" href="#">CSV</a>
+        <span aria-hidden="true"> | </span>
+        <a id="json-link" href="#">JSON</a>
+      </div>
+    </div>
+
+    <section class="posts-grid" id="posts-grid"></section>
+    <div class="empty-state" id="empty-state">
+      <span class="empty-icon">Aa</span>
+      <p>No search results yet.</p>
+    </div>
+  </main>
+
+  <div class="loading-overlay" id="loading" style="display:none">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p class="loading-title" id="loading-title">Loading profile</p>
+      <p class="loading-sub" id="loading-sub">Instagram can take a moment to return profile data.</p>
+      <p class="loading-timer" id="loading-timer">0s</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    Use this only for profiles and content you are allowed to inspect. Login/session access controls still apply.
+  </footer>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let timer = null;
+  let startedAt = 0;
+  let activeUsername = "";
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString();
+  }
+
+  function showError(message) {
+    $("error-text").textContent = message || "";
+    $("error").style.display = message ? "flex" : "none";
+  }
+
+  function setLoginStatus(message, isError) {
+    $("login-status").textContent = message || "";
+    $("login-status").style.color = isError ? "#b91c1c" : "#047857";
+  }
+
+  function setLoading(loading, title, subtitle) {
+    $("search").disabled = loading || !activeUsername;
+    $("load-profile").disabled = loading;
+    $("loading").style.display = loading ? "flex" : "none";
+    clearInterval(timer);
+    if (loading) {
+      $("loading-title").textContent = title || "Loading";
+      $("loading-sub").textContent = subtitle || "";
+      startedAt = Date.now();
+      $("loading-timer").textContent = "0s";
+      timer = setInterval(() => {
+        $("loading-timer").textContent = Math.round((Date.now() - startedAt) / 1000) + "s";
+      }, 500);
+    }
+  }
+
+  function renderProfile(data) {
+    const profile = data.profile;
+    activeUsername = profile.username;
+    $("profile-card").style.display = "grid";
+    $("profile-avatar").src = profile.profile_pic_url || "";
+    $("profile-avatar").alt = "@" + profile.username;
+    $("profile-handle").textContent = "@" + profile.username;
+    $("profile-fullname").textContent = profile.full_name || "";
+    $("profile-bio").textContent = profile.biography || "";
+    $("profile-link").href = profile.external_url || "https://www.instagram.com/" + profile.username + "/";
+    $("profile-link").textContent = profile.external_url || "instagram.com/" + profile.username;
+    $("verified").style.display = profile.is_verified ? "flex" : "none";
+    $("private-tag").style.display = profile.is_private ? "inline-flex" : "none";
+    $("followers").textContent = fmt(profile.followers);
+    $("posts").textContent = fmt(profile.media_count);
+    $("following").textContent = fmt(profile.followees);
+    $("words").disabled = false;
+    $("search").disabled = false;
+    $("words-step").classList.remove("dimmed");
+    $("results-meta").textContent = "Profile loaded. Enter words to find matching post descriptions.";
+  }
+
+  function highlightCaption(caption, words) {
+    let html = escapeHtml(caption || "No caption");
+    words.forEach((word) => {
+      const escaped = escapeRegExp(escapeHtml(word));
+      html = html.replace(new RegExp("(" + escaped + ")", "gi"), "<mark>$1</mark>");
+    });
+    return html;
+  }
+
+  function renderPosts(data) {
+    const grid = $("posts-grid");
+    grid.innerHTML = "";
+    $("empty-state").style.display = data.matches.length ? "none" : "block";
+    $("results-meta").textContent = fmt(data.matches.length) + " match(es) found in " + fmt(data.scanned) + " scanned post(s).";
+    $("exports").style.display = "inline-block";
+    $("csv-link").href = "/export/" + data.job_id + ".csv";
+    $("json-link").href = "/export/" + data.job_id + ".json";
+
+    data.matches.forEach((post) => {
+      const card = document.createElement("article");
+      card.className = "post-card";
+      card.innerHTML = `
+        <a class="post-thumb-link" href="${escapeAttr(post.url)}" target="_blank" rel="noreferrer">
+          <div class="post-thumb-wrap">
+            <img class="post-thumb" src="${escapeAttr(post.thumbnail_url)}" alt="Instagram post thumbnail" loading="lazy">
+            <div class="post-thumb-overlay">
+              <span>${fmt(post.likes)} likes</span>
+              <span>${fmt(post.comments)} comments</span>
+            </div>
+          </div>
+        </a>
+        <div class="post-body">
+          <span class="post-date">${escapeHtml(post.date)} | ${escapeHtml(post.matched_words.join(", "))}</span>
+          <p class="post-caption">${highlightCaption(post.caption, post.matched_words)}</p>
+          <a class="post-open" href="${escapeAttr(post.url)}" target="_blank" rel="noreferrer">Open on Instagram</a>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  async function runSearch() {
+    if (!activeUsername) {
+      showError("Load an Instagram profile first.");
+      return;
+    }
+    showError("");
+    $("posts-grid").innerHTML = "";
+    $("empty-state").style.display = "none";
+    $("exports").style.display = "none";
+    const payload = {
+      username: activeUsername,
+      words: $("words").value.trim(),
+      mode: $("mode").value,
+      session_username: $("session_username").value.trim(),
+      session_file: $("session_file").value.trim(),
+      browser_cookies: $("browser_cookies").value,
+      cookie_file: $("cookie_file").value.trim()
+    };
+
+    setLoading(true, "Searching captions", "Looking through the profile post descriptions for your words.");
+    try {
+      const response = await fetch("/search", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Search failed.");
+      renderProfile(data);
+      renderPosts(data);
+    } catch (error) {
+      showError(error.message);
+      $("empty-state").style.display = "block";
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadProfile() {
+    showError("");
+    activeUsername = "";
+    $("profile-card").style.display = "none";
+    $("posts-grid").innerHTML = "";
+    $("exports").style.display = "none";
+    $("empty-state").style.display = "block";
+    $("words").disabled = true;
+    $("search").disabled = true;
+    $("words-step").classList.add("dimmed");
+    $("results-meta").textContent = "Loading profile...";
+
+    const payload = {
+      username: $("username").value.trim(),
+      session_username: $("session_username").value.trim(),
+      session_file: $("session_file").value.trim(),
+      browser_cookies: $("browser_cookies").value,
+      cookie_file: $("cookie_file").value.trim()
+    };
+
+    setLoading(true, "Loading profile", "Fetching the profile image, bio, and public account details.");
+    try {
+      const response = await fetch("/profile", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Profile load failed.");
+      renderProfile(data);
+    } catch (error) {
+      showError(error.message);
+      $("results-meta").textContent = "Load a profile first, then search words in captions.";
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loginAndSaveSession() {
+    showError("");
+    setLoginStatus("Logging in...", false);
+    $("login-save").disabled = true;
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          login_username: $("login_username").value.trim(),
+          login_password: $("login_password").value
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Login failed.");
+      if (data.requires_2fa) {
+        $("two-factor").style.display = "block";
+        $("login_username").value = data.session_username || $("login_username").value;
+        $("login_password").value = "";
+        setLoginStatus(data.message || "Enter the two-factor code.", false);
+        return;
+      }
+      $("session_username").value = data.session_username;
+      $("session_file").value = data.session_file;
+      $("login_password").value = "";
+      $("two-factor").style.display = "none";
+      setLoginStatus(data.message || "Login saved.", false);
+    } catch (error) {
+      setLoginStatus(error.message, true);
+    } finally {
+      $("login-save").disabled = false;
+    }
+  }
+
+  async function verifyTwoFactor() {
+    setLoginStatus("Verifying code...", false);
+    $("login-2fa").disabled = true;
+    try {
+      const response = await fetch("/login-2fa", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          login_username: $("login_username").value.trim(),
+          two_factor_code: $("two_factor_code").value.trim()
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Two-factor verification failed.");
+      $("session_username").value = data.session_username;
+      $("session_file").value = data.session_file;
+      $("two_factor_code").value = "";
+      $("two-factor").style.display = "none";
+      setLoginStatus(data.message || "Login saved.", false);
+    } catch (error) {
+      setLoginStatus(error.message, true);
+    } finally {
+      $("login-2fa").disabled = false;
+    }
+  }
+
+  $("login-save").addEventListener("click", loginAndSaveSession);
+  $("login-2fa").addEventListener("click", verifyTwoFactor);
+  $("load-profile").addEventListener("click", loadProfile);
+  $("search").addEventListener("click", runSearch);
+  $("username").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadProfile();
+  });
+  $("words").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") runSearch();
+  });
+
+  function escapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/`/g, "&#96;");
+  }
+
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+})();
+</script>
+</body>
+</html>
